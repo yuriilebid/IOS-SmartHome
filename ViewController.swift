@@ -64,75 +64,20 @@ class SettingViewController: UIViewController {
 }
 
 class AddDeviceController: UIViewController, UITableViewDelegate, UITableViewDataSource {
-    var myTableView = UITableView()
-    let identifier = "MyCell"
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        createTable()
-    }
-    
-    func createTable() {
-        self.myTableView = UITableView(frame: view.bounds, style: .plain)
-        myTableView.register(UITableViewCell.self, forCellReuseIdentifier: identifier)
-        self.myTableView.delegate = self
-        self.myTableView.dataSource = self
-        
-        myTableView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        view.addSubview(myTableView)
-    }
-    
-    // MARK: - UITableViewDataSource
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return 3
-    }
+    let devAvailable = myHome.data.getAvailableDevices()
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        switch section {
-        case 0:
-            return 3
-        case 1:
-            return 5
-        case 2:
-            return 8
-        default:
-            break
-        }
-        return 0
+        return devAvailable.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: identifier, for: indexPath)
-        
-        cell.textLabel?.text = "section = \(indexPath.section) cell =  \(indexPath.row)"
-        return cell
+        let cellDev = tableView.dequeueReusableCell(withIdentifier: "availableDevice")
+        cellDev?.textLabel?.text = devAvailable[indexPath.row].1
+        return cellDev!
     }
-    
-    // MARK: - UITableViewDelegate
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 100.0
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        switch indexPath.row {
-        case 1:
-            let storyBoard : UIStoryboard = UIStoryboard(name: "Main", bundle:nil)
-            let nextViewController = storyBoard.instantiateViewController(withIdentifier: "BluetoothSearchView") as! BluetoothSearch
-            
-            DispatchQueue.main.async { [weak self] in
-                self?.present(nextViewController, animated: true, completion: nil)
-            }
-            nextViewController.modalPresentationStyle = .fullScreen
-        default:
-            let storyBoard : UIStoryboard = UIStoryboard(name: "Main", bundle:nil)
-            let nextViewController = storyBoard.instantiateViewController(withIdentifier: "BluetoothSearchView") as! BluetoothSearch
-            
-            DispatchQueue.main.async { [weak self] in
-                self?.present(nextViewController, animated: true, completion: nil)
-            }
-            nextViewController.modalPresentationStyle = .fullScreen
-        }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        print(devAvailable.count)
     }
 }
 
@@ -202,10 +147,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
 
     @objc private func didTapAddButton() {
-        let rootVC = AddDeviceController()
-        let navVC = UINavigationController(rootViewController: rootVC)
-        present(navVC, animated: true, completion: nil)
-        navVC.modalPresentationStyle = .fullScreen
+        let storyBoard : UIStoryboard = UIStoryboard(name: "Main", bundle:nil)
+        let nextViewController = storyBoard.instantiateViewController(withIdentifier: "addingDeviceView") as! AddDeviceController
+        DispatchQueue.main.async { [weak self] in
+            self?.present(nextViewController, animated: true, completion: nil)
+        }
+//        nextViewController.modalPresentationStyle = .fullScreen
+//        let rootVC = AddDeviceController()
+//        let navVC = UINavigationController(rootViewController: rootVC)
+//        present(navVC, animated: true, completion: nil)
+//        navVC.modalPresentationStyle = .fullScreen
     }
     
     func presentSettingView() {

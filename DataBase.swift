@@ -16,12 +16,75 @@ class DataBase {
     init() {
         openDbConnection()
         createTable()
+        initAvailableDevices()
     }
     
     func openDbConnection() {
         if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
             print("error opening database")
         }
+    }
+    
+    func initAvailableDevices() {
+        var stmt: OpaquePointer?
+        var count = Int(0)
+        var query = "select count(*) from availableDevices"
+        if sqlite3_prepare(db, query, -1, &stmt, nil) == SQLITE_OK{
+              while(sqlite3_step(stmt) == SQLITE_ROW){
+                   count = Int(sqlite3_column_int(stmt, 0))
+                   print("\(count)")
+              }
+        }
+        if count == 0 {
+            query = "INSERT INTO availableDevices (deviceid, name, bluetoothIdentifier) VALUES (1, 'Camera', 'esp32camera')"
+            //preparing the query
+            if sqlite3_prepare(db, query, -1, &stmt, nil) != SQLITE_OK{
+                let errmsg = String(cString: sqlite3_errmsg(db)!)
+                print("error preparing insert: \(errmsg)")
+                return
+            }
+            //executing the query to insert values
+            if sqlite3_step(stmt) != SQLITE_DONE {
+                let errmsg = String(cString: sqlite3_errmsg(db)!)
+                print("failure inserting available device: \(errmsg)")
+                return
+            }
+            query = "INSERT INTO availableDevices (deviceid, name, bluetoothIdentifier) VALUES (2, 'Lamp', 'esp32lamp')"
+            //preparing the query
+            if sqlite3_prepare(db, query, -1, &stmt, nil) != SQLITE_OK{
+                let errmsg = String(cString: sqlite3_errmsg(db)!)
+                print("error preparing insert: \(errmsg)")
+                return
+            }
+            //executing the query to insert values
+            if sqlite3_step(stmt) != SQLITE_DONE {
+                let errmsg = String(cString: sqlite3_errmsg(db)!)
+                print("failure inserting available device: \(errmsg)")
+                return
+            }
+        }
+    }
+    
+    func getAvailableDevices() -> [(Int, String, String)] {
+        var devsRes = [(Int, String, String)] ()
+        let queryString = "SELECT * FROM availableDevices"
+        //statement pointer
+        var stmt:OpaquePointer?
+     
+        //preparing the query
+        if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            print("error preparing insert: \(errmsg)")
+            return [(0, "", "")]
+        }
+        //traversing through all the records
+        while(sqlite3_step(stmt) == SQLITE_ROW) {
+            let resId = Int(sqlite3_column_int(stmt, 0))
+            let resName = String(cString: sqlite3_column_text(stmt, 1))
+            let resIdentifier = String(cString: sqlite3_column_text(stmt, 2))
+            devsRes.append((resId, resName, resIdentifier))
+        }
+        return devsRes
     }
     
     func createTable() {
@@ -34,6 +97,10 @@ class DataBase {
             print("error creating table Rooms: \(errmsg)")
         }
         if sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS Devices (deviceid INTEGER PRIMARY KEY AUTOINCREMENT, roomid INTEGER, name TEXT)", nil, nil, nil) != SQLITE_OK {
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            print("error creating table Devices: \(errmsg)")
+        }
+        if sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS availableDevices (deviceid INTEGER PRIMARY KEY, name TEXT, bluetoothIdentifier TEXT)", nil, nil, nil) != SQLITE_OK {
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             print("error creating table Devices: \(errmsg)")
         }
